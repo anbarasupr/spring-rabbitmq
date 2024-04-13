@@ -14,7 +14,7 @@ App1	------->	Exchange -------> Queue	------->			|				|
 																
 																
 	Create queue without exchange
-	Publish and consume messagesdirectly from Queue without exchanges
+	Publish and consume messages directly from Queue without exchanges
 	
 	
 Exchanges:
@@ -23,6 +23,7 @@ Exchanges:
 	Fanout
 	Topic
 	Headers
+	Defaul = Direct Exchange
 	
 	
 	
@@ -162,3 +163,46 @@ Producer	------->	Topic Exchange	/ ___________	TV Queue		------>		Consumer
 										 \	Message	Header = {	"x-match" = "all", "item1" = "mobile", "item2" = "ac" }		 	(both should match so not sending here)	
 										  \				AC Queue		------>		Consumer													
                                                         
+														
+														
+Default Exchange:
+----------------
+	Create queue without binding to an exchange
+	Publish and consume messages directly from Queue without exchanges
+	
+	Behind the scenes, there is a default exchange in rabbitmq which handles these messages that are pushed directly to queue.
+	
+	So the default exchange is an equivalent of direct exchange.
+	
+	The default exchange is implicitly binded to every queue, along with a routing key equal to the queue name.
+	It is not possible to explicitly bind to, or unbind from the default exchange.
+	It cannot also be deleted.
+	This exchange is available by default in rabbitmq
+	
+	
+	
+Exchange to Exchange binding:
+------------------------------
+
+Bind Queue to Direct Exchange with routing key as mobile
+Also Bind Fanout Exchange with routing key as fanout to Direct Exchange
+										  
+										  
+														key=mobile
+											_________	Mobile Queue	------>		Consumer
+			Message						   /			
+			key=mobile	  				  /
+										 /	key=mobile
+Producer	------->	Direct Exchange	/ 									Message	 
+										\              						_________	Other Queue		------>		Consumer   
+										 \	key=fanout 					  /				
+										  \	           					 /
+										   \_________  Fanout Exchange	/ ___________	TV Queue		------>		Consumer	
+																		\                 
+																	     \				 
+																		  \	_________	AC Queue		------>		Consumer 
+                                                                                        
+                                                       
+                                                       
+                                                       
+                                                       
