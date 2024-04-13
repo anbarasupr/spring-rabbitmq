@@ -1,0 +1,164 @@
+RabbitMQ:
+--------------																-----------------
+							RabbitMQ Broker						|				|
+																|	App2		|
+																|				|
+		Messsage			Messsage		Messsage			|				|
+App1	------->	Exchange -------> Queue	------->			|				|
+																|	App3		|
+																|				|
+																|				|
+																|				|
+																|	App4		|
+																-----------------
+																
+																
+	Create queue without exchange
+	Publish and consume messagesdirectly from Queue without exchanges
+	
+	
+Exchanges:
+--------------
+	Direct
+	Fanout
+	Topic
+	Headers
+	
+	
+	
+	
+	
+Direct:		
+-------
+	Queues are binded with a key to the exchange to route the messages
+	Direct Exchange route the message based on the routing key to the specific queue
+	It compares the routing key with exact match unlike topic exchange
+	
+	
+	Sender sends the Message along with routing key:  
+		Message
+		routing key : mobile
+					
+														key=mobile
+											_________	Mobile Queue	------>		Consumer
+			Message						   /			
+			key=mobile					  /
+										 /
+Producer	------->	Direct Exchange	/ 				key=tv
+                                                        TV Queue		------>		Consumer
+														
+														
+														
+														key=ac
+                                                        AC Queue		------>		Consumer
+														
+														
+														
+														
+														
+Fanout:		
+-------
+	The incoming message to the Fanout exchange will be broadcasted to all the queue binded to it
+	No routing keys are required here unlike direct exchange
+	
+	Sender sends the Message without any key:  
+		Message
+ 					
+											Message	
+											_________	Mobile Queue	------>		Consumer										   /			
+			Message						  /
+										 /
+Producer	------->	Fanout Exchange	/ ___________	TV Queue		------>		Consumer
+                                        \                
+										 \				
+										  \	_________	AC Queue		------>		Consumer													
+                                                        
+														
+														
+														
+Topic:	
+-------
+	It compares the routing key with wild card  match unlike direct exchange
+	
+	key looks like a group of words 
+		Ex: tv.mobile.ac
+		
+	Topic exchange is not comparing two keys exactly and it uses wildcard pattern to match the key
+		Key = "*.mobile.*" -> one word before mobile and one word after mobile which satisfies "tv.mobile.ac" 
+		Key = "#.ac.*" -> one or more words before ac and ac is the last word again which satisfies "tv.mobile.ac" 
+		
+		
+	Sender sends the Message along with routing key:  
+		Message
+		routing key : mobile.tv.ac
+		
+		
+		Topic Exchange Examples:
+		
+		Available Queues:
+					Key = "*.mobile*", Queue = Modile
+					Key = "*.tv*", Queue = TV
+					Key = "#.ac", Queue = AC
+		
+		Incoming keys				Queue Match 
+		------->------->------->------->------->
+		tv.ac							AC
+		mobile.tv.ac					TV , AC
+		ac.ac.ac						AC
+		tv.and.mobile.ac				AC
+		
+		
+		Mobile binding key = "*.*.mobile.*"
+		
+		tv.ac.mobile.and				Mobile
+		
+		
+		AC binding key = "#.ac.#"
+		
+		tv.ac.mobile.and				Mobile, AC
+		
+		
+		
+	
+	
+					
+											Message	
+											_________	Mobile Queue	------>		Consumer										   /			
+			Message						  /
+										 /
+Producer	------->	Topic Exchange	/ ___________	TV Queue		------>		Consumer
+                                        \                
+										 \				
+										  \	_________	AC Queue		------>		Consumer													
+                                                        
+														
+														
+Headers:
+--------
+ Instead of routing key, it has the headers with key value pair which decides the queue to route
+ 
+Sender sends the Message alsong with header:
+	 Message
+	 header = {"item1" = "mobile",
+				"item2" = "television" }
+ 
+Header = {	"x-match" = "any", "item1" = "mobile", "item2" = "television" }
+ 
+ 
+ Add the header in arguments when binding queue to the header exchange in rabbitmq web portal
+ Mobile Queue:
+ 
+	 Arguments: x-match any
+				item1	mobile
+				item2	mob
+					
+											Message	Header = {	"x-match" = "any", "item1" = "mobile", "item2" = "mob" }		(any key can match, item1 mobile matches so sending here)
+											_________	Mobile Queue	------>		Consumer										   			
+			Message						   /
+			{"item1" = "mobile",		  /
+			"item2" = "television" }	 /	Message	Header = {	"x-match" = "any", "item1" = "tv", "item2" = "television" }		(any key can match, item2 television matches so sending here)
+Producer	------->	Topic Exchange	/ ___________	TV Queue		------>		Consumer
+                                        \                
+										 \	Message	Header = {	"x-match" = "all", "item1" = "mobile", "item2" = "ac" }		 	(both should match so not sending here)	
+										  \				AC Queue		------>		Consumer													
+                                                        
